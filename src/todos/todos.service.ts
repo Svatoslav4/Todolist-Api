@@ -75,4 +75,12 @@ export class TodosService {
         },
       });
     }
+
+    async remove(userId: string, todoId: string) {
+      await this.findOne(userId, todoId);
+
+      await this.prisma.todo.delete({
+        where: { id: todoId },
+      });
+    }
 }
