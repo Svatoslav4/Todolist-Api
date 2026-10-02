@@ -5,7 +5,6 @@ import { AppModule } from './app.module.js';
 
 async function startApp() {
   const app = await NestFactory.create(AppModule);
-  app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -16,4 +15,4 @@ async function startApp() {
   await app.listen(3000);
 }
 
-startApp();
+void startApp();
