@@ -18,7 +18,7 @@ export class TodosController {
     @Body() dto: CreateTodoDto,
   ) {
     return this.todosService.create(
-      user.userId,d
+      user.userId,
       dto,
     );
   }
