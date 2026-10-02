@@ -1,0 +1,9 @@
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+services:
+  api:
+    build:
+      target: dev
+    command: sh -c "pnpm exec prisma migrate deploy && pnpm start:dev"
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma

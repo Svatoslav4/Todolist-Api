@@ -5,15 +5,36 @@ services:
     restart: unless-stopped
 
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: todo_db
+      POSTGRES_USER: ${POSTGRES_USER:-svyat}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-2006}
+      POSTGRES_DB: ${POSTGRES_DB:-todolist}
 
     ports:
-      - "5432:5432"
+      - '5433:5432'
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      target: prod
+    container_name: todo-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-svyat}:${POSTGRES_PASSWORD:-2006}@postgres:5432/${POSTGRES_DB:-todolist}?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required}
+    ports:
+      - '3000:3000'
 
 volumes:
   postgres_data:
