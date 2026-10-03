@@ -24,7 +24,10 @@ describe('UsersController', () => {
   });
 
   it('getMe is protected by JwtAuthGuard', () => {
-    const guards = Reflect.getMetadata('__guards__', UsersController.prototype.getMe);
+    const guards = Reflect.getMetadata(
+      '__guards__',
+      Object.getOwnPropertyDescriptor(UsersController.prototype, 'getMe')!.value,
+    );
 
     expect(guards).toContain(JwtAuthGuard);
   });

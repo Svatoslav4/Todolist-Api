@@ -66,7 +66,12 @@ describe('TodosController', () => {
     await controller.remove(user, 'todo-1');
 
     expect(todosService.remove).toHaveBeenCalledWith(user.userId, 'todo-1');
-    expect(Reflect.getMetadata('__httpCode__', TodosController.prototype.remove)).toBe(204);
+    expect(
+      Reflect.getMetadata(
+        '__httpCode__',
+        Object.getOwnPropertyDescriptor(TodosController.prototype, 'remove')!.value,
+      ),
+    ).toBe(204);
   });
 
   it('propagates service errors', async () => {
