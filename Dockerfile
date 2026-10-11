@@ -20,7 +20,7 @@ RUN pnpm build
 RUN pnpm prune --prod
 
 
-FROM node:24-alpine AS production
+FROM node:24-alpine AS prod
 
 WORKDIR /app
 
