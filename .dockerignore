@@ -1,13 +1,10 @@
 node_modules
 dist
-coverage
 .git
-.vscode
+.gitignore
 .env
 .env.*
-!.env.example
-*.tsbuildinfo
-*.log
+coverage
+README.md
 Dockerfile
-docker-compose*.yml
-.dockerignore
+docker-compose.yml
