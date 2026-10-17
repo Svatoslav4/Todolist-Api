@@ -1,6 +1,6 @@
-import {Body,Controller,Delete,Get,HttpCode,Param,Patch,Post,UseGuards,} from '@nestjs/common';
+import { Body,Controller,Delete,Get,HttpCode,Param,Patch,Post,UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
-import {CurrentUser,type CurrentUser as CurrentUserType,} from '../common/decorators/current-user.decorator.js';
+import { CurrentUser,type CurrentUser as CurrentUserType, } from '../common/decorators/current-user.decorator.js';
 import { CreateTodoDto } from './dto/create-todo.dto.js';
 import { UpdateTodoDto } from './dto/update-todo.dto.js';
 import { TodosService } from './todos.service.js';
@@ -8,28 +8,21 @@ import { TodosService } from './todos.service.js';
 @Controller('todos')
 @UseGuards(JwtAuthGuard)
 export class TodosController {
-  constructor(
-    private readonly todosService: TodosService,
-  ) {}
+  constructor(private readonly todosService: TodosService,) {}
 
   @Post()
   create(
     @CurrentUser() user: CurrentUserType,
     @Body() dto: CreateTodoDto,
   ) {
-    return this.todosService.create(
-      user.userId,
-      dto,
-    );
+    return this.todosService.create(user.userId, dto);
   }
 
   @Get()
   findAll(
     @CurrentUser() user: CurrentUserType,
   ) {
-    return this.todosService.findAll(
-      user.userId,
-    );
+    return this.todosService.findAll(user.userId);
   }
 
   @Get(':id')
@@ -37,10 +30,7 @@ export class TodosController {
     @CurrentUser() user: CurrentUserType,
     @Param('id') id: string,
   ) {
-    return this.todosService.findOne(
-      user.userId,
-      id,
-    );
+    return this.todosService.findOne(user.userId, id);
   }
 
   @Patch(':id')
@@ -58,13 +48,10 @@ export class TodosController {
 
   @Delete(':id')
   @HttpCode(204)
-  remove(
+  async remove(
     @CurrentUser() user: CurrentUserType,
     @Param('id') id: string,
-  ) {
-    return this.todosService.remove(
-      user.userId,
-      id,
-    );
+  ): Promise<void> {
+    await this.todosService.remove(user.userId, id);
   }
 }

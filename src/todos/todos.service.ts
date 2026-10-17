@@ -1,86 +1,73 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service.js";
-import { CreateTodoDto } from "./dto/create-todo.dto.js";
-import { UpdateTodoDto } from "./dto/update-todo.dto.js";
+import {Injectable,NotFoundException,} from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { CreateTodoDto } from './dto/create-todo.dto.js';
+import { UpdateTodoDto } from './dto/update-todo.dto.js';
 
 @Injectable()
 export class TodosService {
-    constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService,) {}
 
-    async create(userId: string,dto: CreateTodoDto) {
-        return this.prisma.todo.create({
-            data: {
-                title: dto.title,
-                description: dto.description,
-                priority: dto.priority,
-                dueDate: dto.dueDate
-                    ?new Date(dto.dueDate): undefined,
-                    userId
-            }
-        })
+  async create(userId: string, dto: CreateTodoDto) {
+    return this.prisma.todo.create({
+      data: {
+        title: dto.title,
+        description: dto.description,
+        priority: dto.priority,
+        dueDate: dto.dueDate
+          ? new Date(dto.dueDate)
+          : undefined,
+        userId,
+      },
+    });
+  }
+
+  async findAll(userId: string) {
+    return this.prisma.todo.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findOne(userId: string, todoId: string) {
+    const todo = await this.prisma.todo.findFirst({
+      where: {
+        id: todoId,
+        userId,
+      },
+    });
+
+    if (!todo) {
+      throw new NotFoundException('Todo not found');
     }
 
-    async findAll(userId: string) {
-        return this.prisma.todo.findMany({
-            where: {
-                userId
-            },
-            orderBy: {
-                createdAt: "desc"
-            }
-        })
-    }
+    return todo;
+  }
 
-    async findOne(userId: string,todoId: string) {
-        const todo = await this.prisma.todo.findFirst({
-            where: {
-                id: todoId,
-                userId
-            }
-        })
-        if(!todo) {
-            throw new NotFoundException('Todo not found')
-        }
+  async update(userId: string,todoId: string,dto: UpdateTodoDto,) {
+    await this.findOne(userId, todoId);
 
-        return todo
-    }
+    return this.prisma.todo.update({
+      where: { id: todoId },
+      data: {
+        title: dto.title,
+        description: dto.description,
+        priority: dto.priority,
+        dueDate:
+          dto.dueDate === undefined
+            ? undefined
+            : dto.dueDate === null
+              ? null
+              : new Date(dto.dueDate),
+        completed: dto.completed,
+      },
+    });
+  }
 
-    async update(userId: string,todoId: string,dto: UpdateTodoDto,) {
-      const todo =
-        await this.prisma.todo.findFirst({
-          where: {
-            id: todoId,
-            userId,
-          },
-        });
+  async remove(userId: string, todoId: string) {
+    await this.findOne(userId, todoId);
 
-      if (!todo) {
-        throw new NotFoundException(
-          'Todo not found',
-        );
-      }
-
-      return this.prisma.todo.update({
-        where: {
-          id: todoId,
-        },
-        data: {
-          title: dto.title,
-          description: dto.description,
-          priority: dto.priority,
-          dueDate: dto.dueDate
-            ? new Date(dto.dueDate)
-            : undefined,
-          completed: dto.completed,
-        },
-      });
-    }
-
-    async remove(userId: string, todoId: string) {
-      await this.findOne(userId, todoId);
-
-      await this.prisma.todo.delete({
-        where: { id: todoId },
-      });
-    }
+    await this.prisma.todo.delete({
+      where: { id: todoId },
+    });
+  }
 }
