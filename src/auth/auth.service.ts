@@ -4,17 +4,28 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
-import { RefreshTokenService } from './refresh-token.service.js'
+import { RefreshTokenService } from './refresh-token.service.js';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService,private readonly jwtService: JwtService,private readonly refreshTokenService: RefreshTokenService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+    private readonly refreshTokenService: RefreshTokenService,
+  ) {}
+
+  private async issueTokens(userId: string, email: string) {
+    const payload = { sub: userId, email };
+
+    const accessToken = await this.jwtService.signAsync(payload);
+    const refreshToken = await this.refreshTokenService.create(userId);
+
+    return { accessToken, refreshToken };
+  }
 
   async register(dto: RegisterDto) {
     const existingUser = await this.prisma.user.findUnique({
-      where: {
-        email: dto.email,
-      },
+      where: { email: dto.email },
     });
 
     if (existingUser) {
@@ -32,20 +43,23 @@ export class AuthService {
       },
     });
 
+    const tokens = await this.issueTokens(user.id, user.email);
+
     return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstname,
-      lastname: user.lastname,
-      createdAt: user.createdAt,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstname,
+        lastName: user.lastname,
+        createdAt: user.createdAt,
+      },
+      ...tokens,
     };
   }
 
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
-      where: {
-        email: dto.email,
-      },
+      where: { email: dto.email },
     });
 
     if (!user) {
@@ -58,52 +72,33 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const payload = {
-      sub: user.id,
-      email: user.email,
-    };
-
-    const acccessToken = await this.jwtService.signAsync(payload);
-    const refreshToken = await this.refreshTokenService.create(user.id)
-
-    return { acccessToken,refreshToken };
+    return this.issueTokens(user.id, user.email);
   }
 
-  async refreshAccessToken(refreshToken: string,) {
-    const storedToken = await this.refreshTokenService.findValidToken(
-        refreshToken,
-      );
+  async refreshAccessToken(refreshToken: string) {
+    const storedToken = await this.refreshTokenService.findValidToken(refreshToken);
 
     if (!storedToken) {
-      throw new UnauthorizedException('Invalid refresh token',);
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
     const user = await this.prisma.user.findUnique({
-        where: {
-          id: storedToken.userId,
-        },
-      });
+      where: { id: storedToken.userId },
+    });
 
     if (!user) {
-      throw new UnauthorizedException('User not found',);
+      throw new UnauthorizedException('User not found');
     }
 
-    const payload = {
-      sub: user.id,
-      email: user.email,
-    };
-
+    const payload = { sub: user.id, email: user.email };
     const accessToken = await this.jwtService.signAsync(payload);
 
-    return {
-      accessToken,
-    };
+    return { accessToken };
   }
 
   async logout(refreshToken: string) {
-    await this.refreshTokenService.revoke(refreshToken)
+    await this.refreshTokenService.revoke(refreshToken);
 
-    return {message: 'Logged out successfully'}
+    return { message: 'Logged out successfully' };
   }
 }
-

@@ -5,6 +5,11 @@ import { AppModule } from './app.module.js';
 
 async function startApp() {
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+  origin: true,
+  });
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -12,6 +17,7 @@ async function startApp() {
       transform: true,
     }),
   );
+
   await app.listen(3000);
 }
 
